@@ -7,6 +7,9 @@
 module Handler.Home where
 
 import Import
+import System.Directory
+import System.FilePath (joinPath)
+import System.IO.Unsafe
 import Text.Julius (RawJS (..))
 import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3)
 
@@ -16,23 +19,14 @@ data FileForm = FileForm
     fileDescription :: Text
   }
 
--- This is a handler function for the GET request method on the HomeR
--- resource pattern. All of your resource patterns are defined in
--- config/routes.yesodroutes
---
--- The majority of the code you will write in Yesod lives in these handler
--- functions. You can spread them across multiple files if you are so
--- inclined, or create a single monolithic file.
+getStaticHtmlFilePath :: String -> IO FilePath
+getStaticHtmlFilePath filePath =
+  getCurrentDirectory >>= (\basePath -> return (System.FilePath.joinPath [basePath ++ "/templates" ++ filePath]))
+
 getHomeR :: Handler Html
 getHomeR = do
-  (formWidget, formEnctype) <- generateFormPost sampleForm
-  let submission = Nothing :: Maybe FileForm
-      handlerName = "getHomeR" :: Text
-  defaultLayout $ do
-    let (commentFormId, commentTextareaId, commentListId) = commentIds
-    aDomId <- newIdent
-    setTitle "Welcome To Yesod!"
-    $(widgetFile "homepage")
+  let indexFullFilePath = getStaticHtmlFilePath "/index.html"
+  sendFile "text/html" (unsafePerformIO indexFullFilePath)
 
 postHomeR :: Handler Html
 postHomeR = do
